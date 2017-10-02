@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Data.DataModels;
+using Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
@@ -10,31 +13,107 @@ namespace FileUpload.Front.Controllers
     [Authorize]
     public class FileController : ApiController
     {
-        // GET api/<controller>
-        public IEnumerable<string> Get()
+        private IFileDataModel _fileDataModel;
+
+        public FileController()
         {
-            return null;
+             this._fileDataModel = new FileDataModel();
         }
 
-        // GET api/<controller>/5
-        public string Get(int id)
+        public IHttpActionResult Get()
         {
-            return null;
+            try
+            {
+                var userID = Common.GenericHelpers.GetUserID();
+                var result = _fileDataModel.Get(userID);
+                return Ok<List<File>>(result);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError();
+            }
         }
 
-        // POST api/<controller>
-        public void Post([FromBody]string value)
+        public IHttpActionResult Get(Guid id)
         {
+            try
+            {
+                var userID = Common.GenericHelpers.GetUserID();
+                var result = _fileDataModel.Get(id);
+
+                if (result != null)
+                {
+                    return Ok<File>(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError();
+            }
+
+            return NotFound();
         }
 
-        // PUT api/<controller>/5
-        public void Put(int id, [FromBody]string value)
+        public IHttpActionResult Post([FromBody]File file)
         {
+            try
+            {
+                var userID = Common.GenericHelpers.GetUserID();
+                var result = _fileDataModel.Insert(file);
+
+                if (result != null)
+                {
+                    return Created<File>("", result);
+                }
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError();
+            }
+
+            return BadRequest();
         }
 
-        // DELETE api/<controller>/5
-        public void Delete(int id)
+        public IHttpActionResult Put(Guid id, [FromBody]File value)
         {
+            try
+            {
+                var userID = Common.GenericHelpers.GetUserID();
+
+                value.ID = id;
+                var result = _fileDataModel.Update(value);
+
+                if (result > 0)
+                {
+                    return Ok<File>(value);
+                }
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError();
+            }
+
+            return NotFound();
+        }
+
+        public IHttpActionResult Delete(Guid id)
+        {
+            try
+            {
+                var userID = Common.GenericHelpers.GetUserID();
+                var result = _fileDataModel.Delete(id);
+
+                if (result != null)
+                {
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError();
+            }
+
+            return NotFound();
         }
     }
 }
