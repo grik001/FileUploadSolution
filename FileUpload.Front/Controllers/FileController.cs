@@ -7,17 +7,19 @@ using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
 {
+    [Authorize]
     public class FileController : ApiController
     {
         // GET api/<controller>
         public IEnumerable<string> Get()
         {
-           
+            return null;
         }
 
         // GET api/<controller>/5
         public string Get(int id)
         {
+            return null;
         }
 
         // POST api/<controller>
