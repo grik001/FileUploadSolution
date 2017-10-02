@@ -11,7 +11,18 @@ namespace Common
     {
         public static string GetUserID()
         {
-            return Convert.ToString(HttpContext.Current.Session["UserID"]);
+            var session = HttpContext.Current.Session;
+
+            if (session != null)
+            {
+                return Convert.ToString(session["UserID"]);
+            }
+
+#if DEBUG
+            return "41e617de-f730-44bb-aab5-46193c4d4c52";
+#endif
+
+            return null;
         }
     }
 }

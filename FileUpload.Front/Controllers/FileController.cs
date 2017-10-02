@@ -2,22 +2,18 @@
 using Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Web;
+using System.Data.Entity;
 using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
 {
-    [Authorize]
     public class FileController : ApiController
     {
         private IFileDataModel _fileDataModel;
 
         public FileController()
         {
-             this._fileDataModel = new FileDataModel();
+            this._fileDataModel = new FileDataModel();
         }
 
         public IHttpActionResult Get()
@@ -59,11 +55,16 @@ namespace FileUpload.Front.Controllers
             try
             {
                 var userID = Common.GenericHelpers.GetUserID();
-                var result = _fileDataModel.Insert(file);
 
-                if (result != null)
+                if (userID != null)
                 {
-                    return Created<File>("", result);
+                    file.UserID = userID;
+                    var result = _fileDataModel.Insert(file);
+
+                    if (result != null)
+                    {
+                        return Created<File>("", result);
+                    }
                 }
             }
             catch (Exception ex)
