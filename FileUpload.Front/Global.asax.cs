@@ -2,6 +2,8 @@
 using Autofac.Integration.WebApi;
 using Common.Helpers;
 using Common.Helpers.IHelpers;
+using Data.DataModels;
+using log4net.Config;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +22,7 @@ namespace FileUpload.Front
 
         protected void Application_Start()
         {
+            XmlConfigurator.Configure();
             SetupDependancyInjection();
 
             AreaRegistration.RegisterAllAreas();
@@ -35,6 +38,7 @@ namespace FileUpload.Front
             var builder = new ContainerBuilder();
 
             builder.RegisterApiControllers(Assembly.GetExecutingAssembly());
+            builder.RegisterType<FileDataModel>().As<IFileDataModel>().SingleInstance();
             builder.RegisterType<RabbitMQHelper>().As<IMessageQueueHelper>().SingleInstance();
             builder.RegisterType<RedisHelper>().As<ICacheHelper>().SingleInstance();
             builder.RegisterType<Log4NetHelper>().As<ILogger>().SingleInstance();
