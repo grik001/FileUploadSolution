@@ -1,0 +1,42 @@
+﻿.fileuploadContainer
+{
+    margin-top: 20px;
+    width: 100%;
+}
+
+.fileuploadButtonContainer
+{
+    padding:10px;
+}
+
+    .fileuploadButtonContainer input {
+        margin-right: 10px;
+    }
+
+
+.fileUploadTempFileContainer {
+    width: 100%;
+    background-color: #ededed;
+    max-height:300px;
+}
+
+.fileUploadTempFileContainer ul {
+    list-style: none;
+}
+
+    .fileUploadTempFileContainer ul li {
+        padding:10px
+    }
+
+.fileUploadFileListcontainer
+{
+
+}
+
+    .fileUploadFileListcontainer ul {
+        list-style: none;
+    }
+
+        .fileUploadFileListcontainer ul li {
+            padding: 10px
+        }
