@@ -8,6 +8,6 @@ namespace Entities.ViewModels
 {
     public class FileViewModel
     {
-        publi Guid ID { get; set; }
+        public Guid ID { get; set; }
     }
 }
