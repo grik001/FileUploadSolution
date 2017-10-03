@@ -1,4 +1,5 @@
-﻿using Data.DataModels;
+﻿using Common.Helpers.IHelpers;
+using Data.DataModels;
 using Entities;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ namespace FileUpload.Front.Controllers
     {
         private IFileDataModel _fileDataModel;
 
-        public FileController()
+        public FileController(IFileDataModel fileDataModel)
         {
-            this._fileDataModel = new FileDataModel();
+            this._fileDataModel = fileDataModel;
         }
 
         public IHttpActionResult Get()
