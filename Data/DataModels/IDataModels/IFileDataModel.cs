@@ -9,12 +9,12 @@ namespace Data.DataModels
 {
     public interface IFileDataModel
     {
-        List<File> Get();
-        File Get(Guid id);
-        List<File> Get(string userID);
+        List<FileMetaData> Get();
+        FileMetaData Get(Guid id);
+        List<FileMetaData> Get(string userID);
 
-        File Insert(File file);
-        int Update(File file);
+        FileMetaData Insert(FileMetaData file);
+        int Update(FileMetaData file);
         bool Delete(Guid id);
     }
 }

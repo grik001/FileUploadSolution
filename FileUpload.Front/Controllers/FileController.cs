@@ -6,7 +6,9 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
@@ -33,7 +35,7 @@ namespace FileUpload.Front.Controllers
 
                 if (filesDB != null)
                 {
-                    result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl)).ToArray();
+                    result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl, x.ViewCount, x.FileSize)).ToArray();
                 }
 
                 return Ok(result);
@@ -54,7 +56,7 @@ namespace FileUpload.Front.Controllers
 
                 if (fileDB != null)
                 {
-                    var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl);
+                    var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
                     return Ok(result);
                 }
             }
@@ -67,36 +69,52 @@ namespace FileUpload.Front.Controllers
             return NotFound();
         }
 
-        public IHttpActionResult Post([FromBody]File file)
+        [HttpPost]
+        public IHttpActionResult Post()
         {
             try
             {
-                var userID = Common.GenericHelpers.GetUserID();
+                var files = HttpContext.Current.Request.Files;
 
-                if (userID != null)
+                if (files.Count > 0)
                 {
-                    file.UserID = userID;
-                    file.ID = Guid.NewGuid();
-
-                    var fileDB = _fileDataModel.Insert(file);
-
-                    if (fileDB != null)
+                    foreach (string file in files)
                     {
-                        var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl);
-                        return Created("", result);
+                        var fileContent = files[file];
+                        if (fileContent != null && fileContent.ContentLength > 0)
+                        {
+                            var stream = fileContent.InputStream;
+                        }
+                    }
+
+                    var userID = Common.GenericHelpers.GetUserID();
+
+                    if (userID != null)
+                    {
+                        FileMetaData file = new FileMetaData();
+                        file.UserID = userID;
+                        file.ID = Guid.NewGuid();
+
+                        var fileDB = _fileDataModel.Insert(file);
+
+                        if (fileDB != null)
+                        {
+                            var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
+                            return Created("", result);
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"File/Post {JsonConvert.SerializeObject(file)} failed", ex);
+                _logger.LogError($"File/Post failed", ex);
                 return InternalServerError();
             }
 
             return BadRequest();
         }
 
-        public IHttpActionResult Put(Guid id, [FromBody]File file)
+        public IHttpActionResult Put(Guid id, [FromBody]FileMetaData file)
         {
             try
             {

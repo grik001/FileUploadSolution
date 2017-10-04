@@ -10,27 +10,27 @@ namespace Data.DataModels
 {
     public class FileDataModel : IFileDataModel
     {
-        public List<File> Get()
+        public List<FileMetaData> Get()
         {
             using (var context = new FileUploadEntities())
             {
-                return context.Files.ToList();
+                return context.FileMetaDatas.ToList();
             }
         }
 
-        public List<File> Get(string userID)
+        public List<FileMetaData> Get(string userID)
         {
             using (var context = new FileUploadEntities())
             {
-                return context.Files.Where(x => x.UserID == userID).ToList();
+                return context.FileMetaDatas.Where(x => x.UserID == userID).ToList();
             }
         }
 
-        public File Get(Guid id)
+        public FileMetaData Get(Guid id)
         {
             using (var context = new FileUploadEntities())
             {
-                return context.Files.FirstOrDefault(x => x.ID == id);
+                return context.FileMetaDatas.FirstOrDefault(x => x.ID == id);
             }
         }
 
@@ -38,7 +38,7 @@ namespace Data.DataModels
         {
             using (var context = new FileUploadEntities())
             {
-                var file = context.Files.FirstOrDefault(x => x.Filename == filename && x.FileExtension == fileExtension);
+                var file = context.FileMetaDatas.FirstOrDefault(x => x.Filename == filename && x.FileExtension == fileExtension);
                 return file == null ? false : true;
             }
         }
@@ -47,23 +47,23 @@ namespace Data.DataModels
         {
             using (var context = new FileUploadEntities())
             {
-                Guid? searchId = context.Files.Select(x => x.ID).FirstOrDefault(x => x == id);
+                Guid? searchId = context.FileMetaDatas.Select(x => x.ID).FirstOrDefault(x => x == id);
                 return searchId == null ? false : true;
             }
         }
 
-        public File Insert(File file)
+        public FileMetaData Insert(FileMetaData file)
         {
             using (var context = new FileUploadEntities())
             {
 
-                context.Files.Add(file);
+                context.FileMetaDatas.Add(file);
                 context.SaveChanges();
                 return file;
             }
         }
 
-        public int Update(File file)
+        public int Update(FileMetaData file)
         {
             using (var context = new FileUploadEntities())
             {
@@ -76,11 +76,11 @@ namespace Data.DataModels
         {
             using (var context = new FileUploadEntities())
             {
-                var value = context.Files.FirstOrDefault(x => x.ID == id);
+                var value = context.FileMetaDatas.FirstOrDefault(x => x.ID == id);
 
                 if (value != null)
                 {
-                    context.Files.Remove(value);
+                    context.FileMetaDatas.Remove(value);
                     context.SaveChanges();
                     return true;
                 }
