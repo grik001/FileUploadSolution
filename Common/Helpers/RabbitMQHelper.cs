@@ -29,7 +29,7 @@ namespace Common.Helpers
                 var properties = channel.CreateBasicProperties();
                 properties.Persistent = true;
 
-                channel.BasicPublish(exchange: "", routingKey: config.QueueName, basicProperties: properties, body: body);
+                channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: properties, body: body);
             }
         }
 
@@ -52,7 +52,7 @@ namespace Common.Helpers
                     };
 
 
-                    channel.BasicConsume(queue: config.QueueName,
+                    channel.BasicConsume(queue: queueName,
                                          autoAck: true,
                                          consumer: consumer);
 

@@ -9,7 +9,8 @@ namespace Common.Helpers
 {
     public class ApplicationConfig : IApplicationConfig
     {
-        public string QueueName { get => "task_queue3"; }
+        public string FileMetaDataQueue { get => "fileMetaDataQueue"; }
+        public string FileMetaDeleteQueue { get => "fileMetaDeleteQueue"; }
 
         public string RabbitConnection { get => "localhost"; }
 

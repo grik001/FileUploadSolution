@@ -16,12 +16,16 @@ namespace FileUpload.Front.Controllers
     public class FileController : ApiController
     {
         private IFileDataModel _fileDataModel;
+        private IMessageQueueHelper _messageQueueHelper;
         private ILogger _logger;
+        private IApplicationConfig _applicationConfig;
 
-        public FileController(IFileDataModel fileDataModel, ILogger logger)
+        public FileController(IFileDataModel fileDataModel, ILogger logger, IMessageQueueHelper messageQueueHelper, IApplicationConfig applicationConfig)
         {
             this._fileDataModel = fileDataModel;
             this._logger = logger;
+            this._messageQueueHelper = messageQueueHelper;
+            this._applicationConfig = applicationConfig;
         }
 
         public IHttpActionResult Get()
@@ -95,13 +99,7 @@ namespace FileUpload.Front.Controllers
                         file.UserID = userID;
                         file.ID = Guid.NewGuid();
 
-                        var fileDB = _fileDataModel.Insert(file);
-
-                        if (fileDB != null)
-                        {
-                            var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
-                            return Created("", result);
-                        }
+                        _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, file, _applicationConfig.FileMetaDataQueue);
                     }
                 }
             }
@@ -142,20 +140,19 @@ namespace FileUpload.Front.Controllers
             try
             {
                 var userID = Common.GenericHelpers.GetUserID();
-                var result = _fileDataModel.Delete(id);
 
-                if (result == true)
+                if (userID != null)
                 {
-                    return Ok();
+                    _messageQueueHelper.PushMessage<Guid>(_applicationConfig, id, _applicationConfig.FileMetaDeleteQueue);
                 }
+
+                return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogError($"File/Delete/id {id.ToString()} failed", ex);
                 return InternalServerError();
             }
-
-            return NotFound();
         }
     }
 }
