@@ -12,20 +12,30 @@ namespace Common.Helpers
 {
     public class AzureBlobStorageHelper : IFileUploadHelper
     {
-        public AzureBlobStorageHelper(IApplicationConfig config)
+        private ILogger _logger = null;
+
+        public AzureBlobStorageHelper(IApplicationConfig config, ILogger logger)
         {
+            this._logger = logger;
             CreateContainer(config);
         }
 
         public void CreateContainer(IApplicationConfig config)
         {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config.BlobConnectionString);
-            CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-            CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
-            container.CreateIfNotExists();
+            try
+            {
+                CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config.BlobConnectionString);
+                CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
+                container.CreateIfNotExists();
 
-            //TODO
-            container.SetPermissions(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+                //TODO
+                container.SetPermissions(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to create container in Azure Storage", ex);
+            }
         }
 
         public string UploadFile(IApplicationConfig config, Stream stream, string reference)
@@ -41,7 +51,7 @@ namespace Common.Helpers
             }
             catch (Exception ex)
             {
-                //Log
+                _logger.LogError("Failed to upload file to Blob", ex);
                 return null;
             }
         }
