@@ -13,5 +13,7 @@ namespace Common.Helpers.IHelpers
         string FileMetaDeleteQueue { get; }
         string RedisServerName { get; }
         string WebServerUrl { get; }
+        string BlobConnectionString { get; }
+        string CsvContainer { get; }
     }
 }

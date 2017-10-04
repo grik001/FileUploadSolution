@@ -43,6 +43,7 @@ namespace FileUpload.Front
             builder.RegisterType<RedisHelper>().As<ICacheHelper>().SingleInstance();
             builder.RegisterType<Log4NetHelper>().As<ILogger>().SingleInstance();
             builder.RegisterType<ApplicationConfig>().As<IApplicationConfig>().SingleInstance();
+            builder.RegisterType<AzureBlobStorageHelper>().As<IFileUploadHelper>().SingleInstance();
 
             Container = builder.Build();
             config.DependencyResolver = new AutofacWebApiDependencyResolver(Container);

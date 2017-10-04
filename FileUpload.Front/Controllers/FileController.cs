@@ -19,13 +19,15 @@ namespace FileUpload.Front.Controllers
         private IMessageQueueHelper _messageQueueHelper;
         private ILogger _logger;
         private IApplicationConfig _applicationConfig;
+        private IFileUploadHelper _fileUploadHelper;
 
-        public FileController(IFileDataModel fileDataModel, ILogger logger, IMessageQueueHelper messageQueueHelper, IApplicationConfig applicationConfig)
+        public FileController(IFileDataModel fileDataModel, ILogger logger, IMessageQueueHelper messageQueueHelper, IApplicationConfig applicationConfig, IFileUploadHelper fileUploadHelper)
         {
             this._fileDataModel = fileDataModel;
             this._logger = logger;
             this._messageQueueHelper = messageQueueHelper;
             this._applicationConfig = applicationConfig;
+            this._fileUploadHelper = fileUploadHelper;
         }
 
         public IHttpActionResult Get()
@@ -78,28 +80,33 @@ namespace FileUpload.Front.Controllers
         {
             try
             {
-                var files = HttpContext.Current.Request.Files;
+                var userID = Common.GenericHelpers.GetUserID();
 
-                if (files.Count > 0)
+                if (userID != null)
                 {
-                    foreach (string file in files)
+                    var files = HttpContext.Current.Request.Files;
+
+                    if (files.Count > 0)
                     {
-                        var fileContent = files[file];
-                        if (fileContent != null && fileContent.ContentLength > 0)
+                        foreach (string file in files)
                         {
-                            var stream = fileContent.InputStream;
+                            var fileID = Guid.NewGuid();
+
+                            var fileContent = files[file];
+                            if (fileContent != null && fileContent.ContentLength > 0)
+                            {
+                                var stream = fileContent.InputStream;
+
+                               var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString());
+
+                                FileMetaData fileMeta = new FileMetaData();
+                                fileMeta.UserID = userID;
+                                fileMeta.ID = fileID;
+                                fileMeta.BlobUrl = url;
+
+                                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileMetaDataQueue);
+                            }
                         }
-                    }
-
-                    var userID = Common.GenericHelpers.GetUserID();
-
-                    if (userID != null)
-                    {
-                        FileMetaData file = new FileMetaData();
-                        file.UserID = userID;
-                        file.ID = Guid.NewGuid();
-
-                        _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, file, _applicationConfig.FileMetaDataQueue);
                     }
                 }
             }
