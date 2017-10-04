@@ -6,7 +6,9 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
@@ -67,14 +69,28 @@ namespace FileUpload.Front.Controllers
             return NotFound();
         }
 
-        public IHttpActionResult Post([FromBody]File file)
+        [HttpPost]
+        public IHttpActionResult Post()
         {
             try
             {
+                var files = HttpContext.Current.Request.Files;
+
+                foreach (string file in files)
+                {
+                    var fileContent = files[file];
+                    if (fileContent != null && fileContent.ContentLength > 0)
+                    {
+                        var stream = fileContent.InputStream;
+                    }
+                }
+
+
                 var userID = Common.GenericHelpers.GetUserID();
 
                 if (userID != null)
                 {
+                    FileMetaData file = new FileMetaData();
                     file.UserID = userID;
                     file.ID = Guid.NewGuid();
 
@@ -89,14 +105,14 @@ namespace FileUpload.Front.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"File/Post {JsonConvert.SerializeObject(file)} failed", ex);
+                _logger.LogError($"File/Post failed", ex);
                 return InternalServerError();
             }
 
             return BadRequest();
         }
 
-        public IHttpActionResult Put(Guid id, [FromBody]File file)
+        public IHttpActionResult Put(Guid id, [FromBody]FileMetaData file)
         {
             try
             {

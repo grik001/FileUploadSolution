@@ -1,10 +1,46 @@
 var UploadHub = React.createClass({
+
+    fileuploadUploadImages: function () {
+        var fileInput = document.getElementById('fileuploadBtnBrowse');
+
+        var data = new FormData();
+
+        for (var x = 0; x < fileInput.files.length; x++) {
+            data.append("file" + x, fileInput.files[x]);
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '/api/File',
+            contentType: false,
+            processData: false,
+            data: data,
+            success: function (result) {
+                console.log(result);
+            },
+            error: function (xhr, status, p3, p4) {
+                var err = "Error " + " " + status + " " + p3 + " " + p4;
+                if (xhr.responseText && xhr.responseText[0] == "{")
+                    err = JSON.parse(xhr.responseText).Message;
+                console.log(err);
+            }
+        });
+    },
+
+
+    fileuploadUpdateTempList: function () {
+        var fileInput = document.getElementById('fileuploadBtnBrowse');
+        console.log(fileInput.files);
+    },
+
     render: function () {
         return (
             <div className="fileuploadContainer">
                 <div className="row fileuploadButtonContainer">
-                    <input className="btn btn-primary" type="button" value="Browse" />
-                    <input className="btn btn-warning" type="button" value="Start Upload" />
+                    <label className="btn btn-primary btn-file">
+                        Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
+                    </label>
+                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning" type="button" value="Start Upload" />
                     <input className="btn btn-danger" type="button" value="Cancel" />
                 </div>
                 <div className="row fileUploadTempFileContainer">

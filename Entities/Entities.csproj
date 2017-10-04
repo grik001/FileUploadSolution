@@ -64,7 +64,7 @@
     <Compile Include="C__MigrationHistory.cs">
       <DependentUpon>FileUploadDataModel.tt</DependentUpon>
     </Compile>
-    <Compile Include="File.cs">
+    <Compile Include="FileMetaData.cs">
       <DependentUpon>FileUploadDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="FileUploadDataModel.Context.cs">

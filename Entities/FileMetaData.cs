@@ -12,7 +12,7 @@ namespace Entities
     using System;
     using System.Collections.Generic;
     
-    public partial class File
+    public partial class FileMetaData
     {
         public System.Guid ID { get; set; }
         public string UserID { get; set; }
