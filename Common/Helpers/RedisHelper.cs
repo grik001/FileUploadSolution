@@ -11,11 +11,14 @@ namespace Common.Helpers
 {
     public class RedisHelper : ICacheHelper
     {
-        IApplicationConfig _applicationConfig = null;
+        private IApplicationConfig _applicationConfig = null;
+        private ILogger _logger = null;
 
-        public RedisHelper(IApplicationConfig applicationConfig)
+
+        public RedisHelper(IApplicationConfig applicationConfig, ILogger logger)
         {
             this._applicationConfig = applicationConfig;
+            this._logger = logger;
         }
 
         public IDatabase GetConnection()
@@ -31,23 +34,39 @@ namespace Common.Helpers
 
         public T GetValue<T>(string key)
         {
-            var database = GetConnection();
-            var data = database.StringGet(key);
-
-            if (!data.IsNull)
+            try
             {
-                var result = JsonConvert.DeserializeObject<T>(data);
-                return result;
-            }
+                var database = GetConnection();
+                var data = database.StringGet(key);
 
-            return default(T);
+                if (!data.IsNull)
+                {
+                    var result = JsonConvert.DeserializeObject<T>(data);
+                    return result;
+                }
+
+                return default(T);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to start get value from Redis", ex);
+                return default(T);
+            }
         }
 
         public bool SetValue<T>(string key, T value)
         {
-            var database = GetConnection();
-            var result = database.StringSet(key, JsonConvert.SerializeObject(value));
-            return result;
+            try
+            {
+                var database = GetConnection();
+                var result = database.StringSet(key, JsonConvert.SerializeObject(value));
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to start set value in Redis", ex);
+                return false;
+            }
         }
     }
 }
