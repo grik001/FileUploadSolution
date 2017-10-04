@@ -74,6 +74,8 @@
           <Property Name="UserID" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Filename" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="FileExtension" Type="nvarchar" MaxLength="50" />
+          <Property Name="FileSize" Type="int" />
+          <Property Name="ViewCount" Type="int" Nullable="false" />
           <Property Name="BlobUrl" Type="nvarchar(max)" />
         </EntityType>
         <Association Name="FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId">
@@ -301,6 +303,8 @@
           <Property Name="UserID" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Filename" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="FileExtension" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="FileSize" Type="Int32" />
+          <Property Name="ViewCount" Type="Int32" Nullable="false" />
           <Property Name="BlobUrl" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="AspNetUser" Relationship="FileUploadModel.FK_File_AspNetUsers" FromRole="FileMetaData" ToRole="AspNetUser" />
         </EntityType>
@@ -389,6 +393,8 @@
             <EntityTypeMapping TypeName="FileUploadModel.FileMetaData">
               <MappingFragment StoreEntitySet="FileMetaData">
                 <ScalarProperty Name="BlobUrl" ColumnName="BlobUrl" />
+                <ScalarProperty Name="ViewCount" ColumnName="ViewCount" />
+                <ScalarProperty Name="FileSize" ColumnName="FileSize" />
                 <ScalarProperty Name="FileExtension" ColumnName="FileExtension" />
                 <ScalarProperty Name="Filename" ColumnName="Filename" />
                 <ScalarProperty Name="UserID" ColumnName="UserID" />

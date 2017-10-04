@@ -17,7 +17,8 @@
 .fileUploadTempFileContainer {
     width: 100%;
     background-color: #ededed;
-    max-height:300px;
+    max-height:200px;
+    overflow-y: scroll;
 }
 
 .fileUploadTempFileContainer ul {

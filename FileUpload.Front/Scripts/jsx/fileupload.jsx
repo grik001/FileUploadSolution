@@ -1,12 +1,35 @@
 var UploadHub = React.createClass({
+    getInitialState: function () {
+        return { temporaryFiles: [], allFiles: [] };
+    },
+
+    componentWillMount: function () {
+        $.ajax({
+            type: "GET",
+            url: "/api/File/",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data) {
+
+                var filesList = [];
+
+                for (var i = 0; i < data.length; i++) {
+                    var file = data[i];
+                    filesList.push({ id: file.ID, name: file.Filename, url: file.BlobUrl, viewCount: file.Views, size: file.Size });
+                }
+
+                this.setState({ allFiles: filesList });
+            }.bind(this)
+        });
+    },
 
     fileuploadUploadImages: function () {
-        var fileInput = document.getElementById('fileuploadBtnBrowse');
+        var files = this.state.temporaryFiles;
 
         var data = new FormData();
 
-        for (var x = 0; x < fileInput.files.length; x++) {
-            data.append("file" + x, fileInput.files[x]);
+        for (var x = 0; x < files.length; x++) {
+            data.append("file" + x, files[x].fileRef);
         }
 
         $.ajax({
@@ -16,13 +39,12 @@ var UploadHub = React.createClass({
             processData: false,
             data: data,
             success: function (result) {
-                console.log(result);
+
             },
             error: function (xhr, status, p3, p4) {
                 var err = "Error " + " " + status + " " + p3 + " " + p4;
                 if (xhr.responseText && xhr.responseText[0] == "{")
                     err = JSON.parse(xhr.responseText).Message;
-                console.log(err);
             }
         });
     },
@@ -30,69 +52,94 @@ var UploadHub = React.createClass({
 
     fileuploadUpdateTempList: function () {
         var fileInput = document.getElementById('fileuploadBtnBrowse');
-        console.log(fileInput.files);
+        var filesLoaded = fileInput.files;
+
+        var filesTemp = this.state.temporaryFiles;
+
+        for (var i = 0; i < filesLoaded.length; i++) {
+            var file = filesLoaded[i];
+            filesTemp.push({ id: this.generateUUID() + '_' + i, name: file.name, size: file.size, fileRef: file });
+        }
+
+        this.setState({ temporaryFiles: filesTemp });
+
+        document.getElementById("fileuploadBtnBrowse").value = "";
+    },
+
+    fileuploadCancelTemp: function () {
+        this.setState({ temporaryFiles: [] });
+    },
+
+
+    fileuploadDeleteTemp: function (id) {
+        var tempFiles = this.state.temporaryFiles
+
+        for (var i = 0; i < tempFiles.length; i++)
+            if (tempFiles[i].id === id) {
+                tempFiles.splice(i, 1);
+                break;
+            }
+
+        this.setState({ temporaryFiles: tempFiles });
+    },
+
+    generateUUID: function generateUUID() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        return uuid;
+    },
+
+    fileuploadViewUploadedFile: function (id) {
+     
+    },
+
+    fileuploadDeleteUploadedFile: function (id) {
+
     },
 
     render: function () {
         return (
             <div className="fileuploadContainer">
-                <div className="row fileuploadButtonContainer">
+                <div className="row">
                     <label className="btn btn-primary btn-file">
                         Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
                     </label>
                     <input onClick={this.fileuploadUploadImages} className="btn btn-warning" type="button" value="Start Upload" />
-                    <input className="btn btn-danger" type="button" value="Cancel" />
+                    <input onClick={this.fileuploadCancelTemp} className="btn btn-danger" type="button" value="Cancel" />
                 </div>
                 <div className="row fileUploadTempFileContainer">
                     <ul>
-                        <li className="clearfix">
-                            <div className="col-md-6">
-                                <label>FileName:  </label> C:\Users\Keith\Pictures\Saved Pictures\sZo700t.jpg
-                            </div>
-                            <div className="col-md-2">
-                                <label>Size:</label> 128kb
-                            </div>
+                        {this.state.temporaryFiles.map(file =>
+                            <li className="clearfix" key={file.id}>
+                                <div className="col-md-6">
+                                    <label>FileName:  </label> {file.name}
+                                </div>
+                                <div className="col-md-2">
+                                    <label>Size:</label> {file.size}
+                                </div>
 
-                            <div className="col-md-3">
-                                <div className='progress '>
-                                    <div className='progress-bar progress-bar-success'
-                                        role='progressbar'
-                                        aria-valuenow='70'
-                                        aria-valuemin='0'
-                                        aria-valuemax='100'
-                                        style={{ width: '70%' }}>
-                                        <span className='sr-only'>30% Complete</span>
+                                <div className="col-md-3">
+                                    <div className='progress '>
+                                        <div className='progress-bar progress-bar-success'
+                                            role='progressbar'
+                                            aria-valuenow='70'
+                                            aria-valuemin='0'
+                                            aria-valuemax='100'
+                                            style={{ width: '70%' }}>
+                                            <span className='sr-only'>30% Complete</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="col-md-1">
-                                <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                            </div>
-                        </li>
-                        <li className="clearfix">
-                            <div className="col-md-6">
-                                <label>FileName:</label> C:\Users\Keith\Pictures\Saved Pictures\zOrHWVE.jpg
-                            </div>
-                            <div className="col-md-2">
-                                <label>Size: </label> 328kb
-                            </div>
-
-                            <div className="col-md-3">
-                                <div className='progress '>
-                                    <div className='progress-bar progress-bar-success'
-                                        role='progressbar'
-                                        aria-valuenow='70'
-                                        aria-valuemin='0'
-                                        aria-valuemax='100'
-                                        style={{ width: '70%' }}>
-                                        <span className='sr-only'>70% Complete</span>
-                                    </div>
+                                <div className="col-md-1">
+                                    <input className="btn btn-danger pull-right" onClick={this.fileuploadDeleteTemp.bind(null, file.id)} type="button" value="Delete" />
                                 </div>
-                            </div>
-                            <div className="col-md-1">
-                                <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                            </div>
-                        </li>
+                            </li>
+                        )
+                        }
                     </ul>
                 </div>
 
@@ -108,66 +155,21 @@ var UploadHub = React.createClass({
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Data.csv</td>
-                                <td>http://fileupload.com/data.csv</td>
-                                <td>12mb</td>
-                                <td>25</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
-                            <tr className="success">
-                                <td>Wages.csv</td>
-                                <td>http://fileupload.com/wages.csv</td>
-                                <td>500kb</td>
-                                <td>900</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
-                            <tr className="danger">
-                                <td>Trucks.csv</td>
-                                <td>http://fileupload.com/trucks.csv</td>
-                                <td>30kb</td>
-                                <td>25</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
-                            <tr className="info">
-                                <td>Cars.csv</td>
-                                <td>http://fileupload.com/cars.csv</td>
-                                <td>20kb</td>
-                                <td>18</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
-                            <tr className="warning">
-                                <td>Data.csv</td>
-                                <td>http://fileupload.com/data.csv</td>
-                                <td>55kb</td>
-                                <td>33</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
-                            <tr className="active">
-                                <td>FoodList.csv</td>
-                                <td>http://fileupload.com/Food.csv</td>
-                                <td>300kb</td>
-                                <td>500</td>
-                                <td>
-                                    <input className="btn btn-warning pull-right" type="button" value="View" />
-                                    <input className="btn btn-danger pull-right" type="button" value="Delete" />
-                                </td>
-                            </tr>
+                            {this.state.allFiles.map(file =>
+                                <tr key={file.id}>
+
+                                    <td>{file.name}</td>
+                                    <td>{file.url}</td>
+                                    <td>{file.size}</td>
+                                    <td>{file.viewCount}</td>
+                                    <td>
+                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id)} className="btn btn-warning pull-right" type="button" value="View" />
+                                        <input onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)}  className="btn btn-danger pull-right"  type="button" value="Delete" />
+                                    </td>
+
+                                </tr>
+                            )
+                            }
                         </tbody>
                     </table>
                 </div>

@@ -35,7 +35,7 @@ namespace FileUpload.Front.Controllers
 
                 if (filesDB != null)
                 {
-                    result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl)).ToArray();
+                    result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl, x.ViewCount, x.FileSize)).ToArray();
                 }
 
                 return Ok(result);
@@ -56,7 +56,7 @@ namespace FileUpload.Front.Controllers
 
                 if (fileDB != null)
                 {
-                    var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl);
+                    var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
                     return Ok(result);
                 }
             }
@@ -76,30 +76,32 @@ namespace FileUpload.Front.Controllers
             {
                 var files = HttpContext.Current.Request.Files;
 
-                foreach (string file in files)
+                if (files.Count > 0)
                 {
-                    var fileContent = files[file];
-                    if (fileContent != null && fileContent.ContentLength > 0)
+                    foreach (string file in files)
                     {
-                        var stream = fileContent.InputStream;
+                        var fileContent = files[file];
+                        if (fileContent != null && fileContent.ContentLength > 0)
+                        {
+                            var stream = fileContent.InputStream;
+                        }
                     }
-                }
 
+                    var userID = Common.GenericHelpers.GetUserID();
 
-                var userID = Common.GenericHelpers.GetUserID();
-
-                if (userID != null)
-                {
-                    FileMetaData file = new FileMetaData();
-                    file.UserID = userID;
-                    file.ID = Guid.NewGuid();
-
-                    var fileDB = _fileDataModel.Insert(file);
-
-                    if (fileDB != null)
+                    if (userID != null)
                     {
-                        var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl);
-                        return Created("", result);
+                        FileMetaData file = new FileMetaData();
+                        file.UserID = userID;
+                        file.ID = Guid.NewGuid();
+
+                        var fileDB = _fileDataModel.Insert(file);
+
+                        if (fileDB != null)
+                        {
+                            var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
+                            return Created("", result);
+                        }
                     }
                 }
             }

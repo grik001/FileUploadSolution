@@ -18,6 +18,8 @@ namespace Entities
         public string UserID { get; set; }
         public string Filename { get; set; }
         public string FileExtension { get; set; }
+        public Nullable<int> FileSize { get; set; }
+        public int ViewCount { get; set; }
         public string BlobUrl { get; set; }
     
         public virtual AspNetUser AspNetUser { get; set; }
