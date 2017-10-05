@@ -12,12 +12,14 @@ namespace Entities
     using System;
     using System.Collections.Generic;
     
-    public partial class File
+    public partial class FileMetaData
     {
         public System.Guid ID { get; set; }
         public string UserID { get; set; }
         public string Filename { get; set; }
         public string FileExtension { get; set; }
+        public Nullable<int> FileSize { get; set; }
+        public int ViewCount { get; set; }
         public string BlobUrl { get; set; }
     
         public virtual AspNetUser AspNetUser { get; set; }
