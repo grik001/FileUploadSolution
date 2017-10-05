@@ -15,49 +15,71 @@ namespace Common.Helpers
 
     public class RabbitMQHelper : IMessageQueueHelper
     {
+
+        private ILogger _logger = null;
+
+        public RabbitMQHelper(ILogger logger)
+        {
+            this._logger = logger;
+        }
+
         public void PushMessage<T>(IApplicationConfig config, T message, string queueName)
         {
-            var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
-
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
+            try
             {
-                channel.QueueDeclare(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
 
-                var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+                using (var connection = factory.CreateConnection())
+                using (var channel = connection.CreateModel())
+                {
+                    channel.QueueDeclare(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
-                var properties = channel.CreateBasicProperties();
-                properties.Persistent = true;
+                    var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-                channel.BasicPublish(exchange: "", routingKey: config.QueueName, basicProperties: properties, body: body);
+                    var properties = channel.CreateBasicProperties();
+                    properties.Persistent = true;
+
+                    channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: properties, body: body);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to push message to Queue", ex);
             }
         }
 
         public async Task ReadMessages<T>(IApplicationConfig config, Action<T> actionOnReceive, string queueName)
         {
-            var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
-            using (var connection = factory.CreateConnection())
+            try
             {
-                using (var channel = connection.CreateModel())
+                var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
+                using (var connection = factory.CreateConnection())
                 {
-                    channel.QueueDeclare(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-
-                    var consumer = new EventingBasicConsumer(channel);
-
-                    consumer.Received += (model, ea) =>
+                    using (var channel = connection.CreateModel())
                     {
-                        var body = ea.Body;
-                        var message = JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(body));
-                        actionOnReceive.Invoke(message);
-                    };
+                        channel.QueueDeclare(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
+
+                        var consumer = new EventingBasicConsumer(channel);
+
+                        consumer.Received += (model, ea) =>
+                        {
+                            var body = ea.Body;
+                            var message = JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(body));
+                            actionOnReceive.Invoke(message);
+                        };
 
 
-                    channel.BasicConsume(queue: config.QueueName,
-                                         autoAck: true,
-                                         consumer: consumer);
+                        channel.BasicConsume(queue: queueName,
+                                             autoAck: true,
+                                             consumer: consumer);
 
-                    Console.ReadKey();
+                        Console.ReadKey();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to start Queue monitoring", ex);
             }
         }
 
