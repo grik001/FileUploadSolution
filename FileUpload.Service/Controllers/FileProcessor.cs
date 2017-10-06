@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Data.DataModels;
+using Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,14 +10,22 @@ namespace FileUpload.Service.Controllers
 {
     public class FileProcessor
     {
-        public void FilePushed<T>(T value)
-        {
+        IFileDataModel _fileDataModel = null;
 
+        public FileProcessor(IFileDataModel fileDataModel)
+        {
+            this._fileDataModel = fileDataModel;
         }
 
-        public void FileDelete<T>(T value)
-        {
 
+        public void FilePushed(FileMetaData value)
+        {
+            _fileDataModel.Insert(value);
+        }
+
+        public void FileDelete(Guid value)
+        {
+            _fileDataModel.Delete(value);
         }
     }
 }

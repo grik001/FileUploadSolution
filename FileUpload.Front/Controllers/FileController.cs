@@ -13,6 +13,7 @@ using System.Web.Http;
 
 namespace FileUpload.Front.Controllers
 {
+    [Authorize]
     public class FileController : ApiController
     {
         private IFileDataModel _fileDataModel;
@@ -80,6 +81,8 @@ namespace FileUpload.Front.Controllers
         {
             try
             {
+                List<FileViewModel> pushedfiles = new List<FileViewModel>();
+
                 var userID = Common.GenericHelpers.GetUserID();
 
                 if (userID != null)
@@ -103,12 +106,18 @@ namespace FileUpload.Front.Controllers
                                 fileMeta.UserID = userID;
                                 fileMeta.ID = fileID;
                                 fileMeta.BlobUrl = url;
+                                fileMeta.FileSize = fileContent.ContentLength;
+                                fileMeta.Filename = fileContent.FileName;
 
-                                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileMetaDataQueue);
+                                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileDataCreateQueue);
+                                
+                                pushedfiles.Add(new FileViewModel(fileMeta.ID, fileMeta.UserID, fileMeta.Filename, fileMeta.FileExtension, fileMeta.BlobUrl, fileMeta.ViewCount, fileMeta.FileSize));
                             }
                         }
                     }
                 }
+
+                return Ok(pushedfiles);
             }
             catch (Exception ex)
             {

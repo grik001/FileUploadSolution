@@ -9,7 +9,7 @@ namespace Common.Helpers.IHelpers
     public interface IApplicationConfig
     {
         string RabbitConnection { get; }
-        string FileMetaDataQueue { get; }
+        string FileDataCreateQueue { get; }
         string FileMetaDeleteQueue { get; }
         string RedisServerName { get; }
         string WebServerUrl { get; }

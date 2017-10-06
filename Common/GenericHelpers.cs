@@ -11,16 +11,12 @@ namespace Common
     {
         public static string GetUserID()
         {
-            var session = HttpContext.Current.Session;
+            var userID = HttpContext.Current.Request.Cookies["UserID"].Value;
 
-            if (session != null)
+            if (userID != null)
             {
-                return Convert.ToString(session["UserID"]);
+                return Convert.ToString(userID);
             }
-
-#if DEBUG
-            return "41e617de-f730-44bb-aab5-46193c4d4c52";
-#endif
 
             return null;
         }
