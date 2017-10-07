@@ -21,21 +21,20 @@ var ViewCsvModal = React.createClass({
     }
 });
 
-
-
 var UploadHub = React.createClass({
 
     getInitialState: function () {
         return { temporaryFiles: [], allFiles: [], fileUploadHub: $.connection.fileUploadHub };
     },
 
-    fileuploadUpdateProgress: function (id) {
+    fileuploadUpdateProgress: function (id, name) {
         $("#progress_" + id).prop("aria-valuenow", 100);
         $("#progress_" + id).css("width", "100%");
 
         setTimeout(function () {
+            toastr.info('File ' + name + ' uploaded');
             this.fileuploadDeleteTemp(id);
-        }.bind(this), 1000)
+        }.bind(this), 2000)
     },
 
     setCookie: function (cname, cvalue, exdays) {
@@ -162,13 +161,10 @@ var UploadHub = React.createClass({
     },
 
     fileupoadShowHide: function () {
-
         if (this.state.temporaryFiles.length > 0) {
-            $('#fileUploadTempFileContainer').show();
             $('#fileuploadBtnStartUpload').removeAttr("disabled");
         }
         else {
-            $('#fileUploadTempFileContainer').hide();
             $('#fileuploadBtnStartUpload').prop("disabled", true);
         }
     },
@@ -248,6 +244,8 @@ var UploadHub = React.createClass({
     },
 
     render: function () {
+        const tempFileContainerVisible = this.state.temporaryFiles.length > 0;
+
         return (
             <div className="fileuploadContainer">
                 <div className="row">
@@ -257,7 +255,7 @@ var UploadHub = React.createClass({
                     <input id='fileuploadBtnStartUpload' onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
                     <input onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
                 </div>
-                <div id='fileUploadTempFileContainer' className="row fileUploadTempFileContainer">
+                <div id='fileUploadTempFileContainer' style={{ display: tempFileContainerVisible ? 'block' : 'none' }} className="row fileUploadTempFileContainer">
                     <ul>
                         {this.state.temporaryFiles.map(file =>
                             <li className="clearfix" key={file.id}>

@@ -11,7 +11,7 @@ namespace FileUpload.Service.Hubs
     {
         public interface IFileUploadHub
         {
-            void VerifyUpload(string targetClient, string id);
+            void VerifyUpload(string targetClient, string id, string name);
 
             void RemoveFileFromList(string targetClient, string id);
 

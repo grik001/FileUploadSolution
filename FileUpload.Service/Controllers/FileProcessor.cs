@@ -30,7 +30,7 @@ namespace FileUpload.Service.Controllers
 
         public void FilePushed(QueueFileMetaDataModel queueMessage)
         {
-            _fileUploadHub.VerifyUpload(queueMessage.SocketID, queueMessage.MappingID);
+            _fileUploadHub.VerifyUpload(queueMessage.SocketID, queueMessage.MappingID, queueMessage.FileMeta.Filename);
             _fileDataModel.Insert(queueMessage.FileMeta);
         }
 

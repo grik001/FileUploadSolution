@@ -18,9 +18,9 @@ namespace FileUpload.Service.Hubs
             {
             }
 
-            public void VerifyUpload(string targetClient, string id)
+            public void VerifyUpload(string targetClient, string id, string name)
             {
-                hubContext.Clients.Client(targetClient).fileuploadUpdateProgress(id);
+                hubContext.Clients.Client(targetClient).fileuploadUpdateProgress(id, name);
             }
 
             public void RemoveFileFromList(string targetClient, string id)
