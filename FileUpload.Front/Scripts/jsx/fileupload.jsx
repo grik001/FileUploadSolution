@@ -1,10 +1,68 @@
+var ViewCsvModal = React.createClass({
+    render: function () {
+        return (
+            <div id="csvModal" className="modal fade" role="dialog">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal">&times;</button>
+                            <h4 id='csvModalHeader' className="modal-title"></h4>
+                        </div>
+                        <div id='csvModalText' className="modal-body csvModalText">
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        );
+    }
+});
+
 var UploadHub = React.createClass({
 
     getInitialState: function () {
-        return { temporaryFiles: [], allFiles: [] };
+        return { temporaryFiles: [], allFiles: [], fileUploadHub: $.connection.fileUploadHub };
+    },
+
+    fileuploadUpdateProgress: function (id, name) {
+        $("#progress_" + id).prop("aria-valuenow", 100);
+        $("#progress_" + id).css("width", "100%");
+
+        setTimeout(function () {
+            toastr.info('File ' + name + ' uploaded');
+            this.fileuploadDeleteTemp(id);
+        }.bind(this), 2000)
+    },
+
+    setCookie: function (cname, cvalue, exdays) {
+        var d = new Date();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        var expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    },
+
+
+    componentDidMount: function () {
+        $('#fileuploadBtnStartUpload').prop("disabled", true);
     },
 
     componentWillMount: function () {
+        $.connection.hub.url = "http://localhost:8091/signalr";
+
+        var fileUploadHub = this.state.fileUploadHub;
+
+        this.state.fileUploadHub.client.fileuploadUpdateProgress = this.fileuploadUpdateProgress;
+        this.state.fileUploadHub.client.fileuploadRemoveFileFrontList = this.fileuploadRemoveFileFrontList;
+        this.state.fileUploadHub.client.fileuploadUpdateRow = this.fileuploadUpdateRow;
+
+        $.connection.hub.start().done(function () {
+            console.log(this.state.fileUploadHub.connection.id);
+            this.setCookie("ConnectionID", this.state.fileUploadHub.connection.id, 1);
+        }.bind(this));
+
         $.ajax({
             type: "GET",
             url: "/api/File/",
@@ -16,14 +74,22 @@ var UploadHub = React.createClass({
         });
     },
 
-    fileuploadUploadImages: function () {
+    fileuploadUploadImages: function (e) {
+        var uploadButton = e.target;
+        $(uploadButton).prop("disabled", true);
+
         var files = this.state.temporaryFiles;
 
         var data = new FormData();
 
         for (var x = 0; x < files.length; x++) {
-            data.append("file" + x, files[x].fileRef);
+            if (files[x].pushed == false) {
+                files[x].pushed = true;
+                data.append(files[x].id, files[x].fileRef);
+                console.log(files[x].id);
+            }
         }
+
 
         $.ajax({
             type: "POST",
@@ -33,7 +99,6 @@ var UploadHub = React.createClass({
             data: data,
             success: function (data) {
                 this.fileuploadUpdateFileList(data);
-                this.setState({ temporaryFiles: [] });
             }.bind(this),
             error: function (xhr, status, p3, p4) {
                 var err = "Error " + " " + status + " " + p3 + " " + p4;
@@ -52,7 +117,6 @@ var UploadHub = React.createClass({
         }
 
         this.setState({ allFiles: currentFiles });
-
     },
 
     fileuploadUpdateTempList: function () {
@@ -63,19 +127,16 @@ var UploadHub = React.createClass({
 
         for (var i = 0; i < filesLoaded.length; i++) {
             var file = filesLoaded[i];
-            filesTemp.push({ id: this.generateUUID() + '_' + i, name: file.name, size: file.size, fileRef: file });
+            filesTemp.push({ id: this.generateUUID(), name: file.name, size: file.size, fileRef: file, pushed: false });
         }
 
-        this.setState({ temporaryFiles: filesTemp });
+        this.setState({ temporaryFiles: filesTemp }, this.fileupoadShowHide);
         document.getElementById("fileuploadBtnBrowse").value = "";
-        this.fileupoadShowHide();
     },
 
     fileuploadCancelTemp: function () {
-        this.setState({ temporaryFiles: [] });
-        this.fileupoadShowHide();
+        this.setState({ temporaryFiles: [] }, this.fileupoadShowHide);
     },
-
 
     fileuploadDeleteTemp: function (id) {
         var tempFiles = this.state.temporaryFiles
@@ -86,8 +147,7 @@ var UploadHub = React.createClass({
                 break;
             }
 
-        this.setState({ temporaryFiles: tempFiles });
-        this.fileupoadShowHide();
+        this.setState({ temporaryFiles: tempFiles }, this.fileupoadShowHide);
     },
 
     generateUUID: function generateUUID() {
@@ -101,16 +161,15 @@ var UploadHub = React.createClass({
     },
 
     fileupoadShowHide: function () {
-
         if (this.state.temporaryFiles.length > 0) {
-            $('#fileUploadTempFileContainer').show();
+            $('#fileuploadBtnStartUpload').removeAttr("disabled");
         }
         else {
-            $('#fileUploadTempFileContainer').hide();
+            $('#fileuploadBtnStartUpload').prop("disabled", true);
         }
     },
 
-    fileuploadViewUploadedFile: function (id) {
+    fileuploadViewUploadedFile: function (id, blobUrl, fileName) {
         $.ajax({
             type: "PUT",
             url: '/api/File/' + id,
@@ -123,9 +182,25 @@ var UploadHub = React.createClass({
 
             }
         });
+
+        $.ajax({
+            type: "GET",
+            url: blobUrl,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                $('#csvModalHeader').text(fileName);
+                $('#csvModalText').text(data);
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
-    fileuploadDeleteUploadedFile: function (id) {
+    fileuploadDeleteUploadedFile: function (id, e) {
+        $(e.target).prop("disabled", true);
+
         $.ajax({
             type: "DELETE",
             url: '/api/File/' + id,
@@ -135,22 +210,52 @@ var UploadHub = React.createClass({
 
             }.bind(this),
             error: function (xhr, status, p3, p4) {
-
+                $('#fileuploadBtnDelete_' + id).prop("disabled", false);
             }
         });
     },
 
+    fileuploadRemoveFileFrontList: function (id) {
+        var allFiles = this.state.allFiles
+
+        for (var i = 0; i < allFiles.length; i++)
+            if (allFiles[i].id === id) {
+                allFiles.splice(i, 1);
+                break;
+            }
+
+        this.setState({ allFiles: allFiles }, this.fileupoadShowHide);
+    },
+
+    fileuploadUpdateRow: function (data) {
+        var allFiles = this.state.allFiles
+
+        for (var i = 0; i < allFiles.length; i++)
+            if (allFiles[i].id === data.ID) {
+                allFiles[i] = { id: data.ID, name: data.Filename, url: data.BlobUrl, viewCount: data.Views, size: data.Size };
+                break;
+            }
+
+        this.setState({ allFiles: allFiles }, this.fileupoadShowHide);
+    },
+
+    fileuploadDownloadUploadedFile: function (fileUrl) {
+        window.open(fileUrl);
+    },
+
     render: function () {
+        const tempFileContainerVisible = this.state.temporaryFiles.length > 0;
+
         return (
             <div className="fileuploadContainer">
                 <div className="row">
                     <label className="btn btn-primary btn-file fileuploadFunctionButton">
-                        Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
+                        Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' accept=".csv" type="file" style={{ display: 'none' }} multiple />
                     </label>
-                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
+                    <input id='fileuploadBtnStartUpload' onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
                     <input onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
                 </div>
-                <div id='fileUploadTempFileContainer' className="row fileUploadTempFileContainer">
+                <div id='fileUploadTempFileContainer' style={{ display: tempFileContainerVisible ? 'block' : 'none' }} className="row fileUploadTempFileContainer">
                     <ul>
                         {this.state.temporaryFiles.map(file =>
                             <li className="clearfix" key={file.id}>
@@ -163,12 +268,12 @@ var UploadHub = React.createClass({
 
                                 <div className="col-md-3">
                                     <div className='progress '>
-                                        <div className='progress-bar progress-bar-success'
+                                        <div id={'progress_' + file.id} className='progress-bar progress-bar-success'
                                             role='progressbar'
-                                            aria-valuenow='70'
+                                            aria-valuenow='0'
                                             aria-valuemin='0'
                                             aria-valuemax='100'
-                                            style={{ width: '70%' }}>
+                                            style={{ width: '0%' }}>
                                             <span className='sr-only'>30% Complete</span>
                                         </div>
                                     </div>
@@ -187,8 +292,7 @@ var UploadHub = React.createClass({
                         <thead>
                             <tr>
                                 <th>File</th>
-                                <th>File Url</th>
-                                <th>Size</th>
+                                <th>Size(bytes)</th>
                                 <th>Views</th>
                                 <th></th>
                             </tr>
@@ -196,14 +300,13 @@ var UploadHub = React.createClass({
                         <tbody>
                             {this.state.allFiles.map(file =>
                                 <tr key={file.id}>
-
                                     <td>{file.name}</td>
-                                    <td>{file.url}</td>
                                     <td>{file.size}</td>
                                     <td>{file.viewCount}</td>
                                     <td>
-                                        <input onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)} className="btn btn-danger pull-right" type="button" value="Delete" />
-                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id)} className="btn btn-warning pull-right fileuploadFunctionButton" type="button" value="View" />
+                                        <input id={'fileuploadBtnDelete_' + file.id} onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)} className="btn btn-danger pull-right" type="button" value="Delete" />
+                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id, file.url, file.name)} className="btn btn-warning pull-right fileuploadFunctionButton" type="button" value="View" data-toggle="modal" data-target="#csvModal" />
+                                        <input onClick={this.fileuploadDownloadUploadedFile.bind(null, file.url)} className="btn btn-info pull-right fileuploadFunctionButton" type="button" value="Download" />
                                     </td>
 
                                 </tr>
@@ -212,6 +315,8 @@ var UploadHub = React.createClass({
                         </tbody>
                     </table>
                 </div>
+
+                <ViewCsvModal />
             </div>
         );
     }

@@ -398,7 +398,14 @@ namespace FileUpload.Front.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult LogOff()
         {
-            this.Response.Cookies.Remove("UserID");
+            HttpCookie userIdCookie = new HttpCookie("UserID");
+            userIdCookie.Expires = DateTime.Now.AddDays(-1d);
+            this.Response.Cookies.Add(userIdCookie);
+
+            HttpCookie connectionIdCookie = new HttpCookie("ConnectionID");
+            connectionIdCookie.Expires = DateTime.Now.AddDays(-1d);
+            this.Response.Cookies.Add(connectionIdCookie);
+
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             return RedirectToAction("Index", "Home");
         }
