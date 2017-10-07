@@ -100,7 +100,7 @@ namespace FileUpload.Front.Controllers
                             {
                                 var stream = fileContent.InputStream;
 
-                               var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString());
+                                var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString());
 
                                 FileMetaData fileMeta = new FileMetaData();
                                 fileMeta.UserID = userID;
@@ -110,14 +110,14 @@ namespace FileUpload.Front.Controllers
                                 fileMeta.Filename = fileContent.FileName;
 
                                 _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileDataCreateQueue);
-                                
+
                                 pushedfiles.Add(new FileViewModel(fileMeta.ID, fileMeta.UserID, fileMeta.Filename, fileMeta.FileExtension, fileMeta.BlobUrl, fileMeta.ViewCount, fileMeta.FileSize));
                             }
                         }
                     }
-                }
 
-                return Ok(pushedfiles);
+                    return Ok(pushedfiles);
+                }
             }
             catch (Exception ex)
             {
@@ -128,27 +128,24 @@ namespace FileUpload.Front.Controllers
             return BadRequest();
         }
 
-        public IHttpActionResult Put(Guid id, [FromBody]FileMetaData file)
+        public IHttpActionResult Put(Guid id)
         {
             try
             {
                 var userID = Common.GenericHelpers.GetUserID();
-                file.ID = id;
 
-                var result = _fileDataModel.Update(file);
+                FileMetaData fileMeta = new FileMetaData();
+                fileMeta.UserID = userID;
+                fileMeta.ID = id;
 
-                if (result > 0)
-                {
-                    return Ok();
-                }
+                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileOpenedQueue);
+                return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"File/Put/id  id:{id} - file:{JsonConvert.SerializeObject(file)} failed", ex);
+                _logger.LogError($"File/Put/id  id:{id} failed", ex);
                 return InternalServerError();
             }
-
-            return NotFound();
         }
 
         public IHttpActionResult Delete(Guid id)
@@ -159,7 +156,11 @@ namespace FileUpload.Front.Controllers
 
                 if (userID != null)
                 {
-                    _messageQueueHelper.PushMessage<Guid>(_applicationConfig, id, _applicationConfig.FileMetaDeleteQueue);
+                    FileMetaData fileMeta = new FileMetaData();
+                    fileMeta.UserID = userID;
+                    fileMeta.ID = id;
+
+                    _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileMetaDeleteQueue);
                 }
 
                 return Ok();

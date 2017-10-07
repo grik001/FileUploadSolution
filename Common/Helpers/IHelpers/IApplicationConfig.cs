@@ -9,8 +9,11 @@ namespace Common.Helpers.IHelpers
     public interface IApplicationConfig
     {
         string RabbitConnection { get; }
+
         string FileDataCreateQueue { get; }
         string FileMetaDeleteQueue { get; }
+        string FileOpenedQueue { get; }
+        
         string RedisServerName { get; }
         string WebServerUrl { get; }
         string BlobConnectionString { get; }

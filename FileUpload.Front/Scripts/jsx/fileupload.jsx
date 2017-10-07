@@ -44,7 +44,7 @@ var UploadHub = React.createClass({
     },
 
     fileuploadUpdateFileList: function (filesList) {
-        currentFiles = this.state.allFiles; 
+        currentFiles = this.state.allFiles;
 
         for (var i = 0; i < filesList.length; i++) {
             var file = filesList[i];
@@ -73,7 +73,6 @@ var UploadHub = React.createClass({
 
     fileuploadCancelTemp: function () {
         this.setState({ temporaryFiles: [] });
-
         this.fileupoadShowHide();
     },
 
@@ -112,11 +111,33 @@ var UploadHub = React.createClass({
     },
 
     fileuploadViewUploadedFile: function (id) {
-     
+        $.ajax({
+            type: "PUT",
+            url: '/api/File/' + id,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
     fileuploadDeleteUploadedFile: function (id) {
+        $.ajax({
+            type: "DELETE",
+            url: '/api/File/' + id,
+            contentType: false,
+            processData: false,
+            success: function (data) {
 
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
     render: function () {
@@ -126,8 +147,8 @@ var UploadHub = React.createClass({
                     <label className="btn btn-primary btn-file fileuploadFunctionButton">
                         Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
                     </label>
-                    <input  onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
-                    <input  onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
+                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
+                    <input onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
                 </div>
                 <div id='fileUploadTempFileContainer' className="row fileUploadTempFileContainer">
                     <ul>

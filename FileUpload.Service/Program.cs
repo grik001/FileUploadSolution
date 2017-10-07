@@ -19,6 +19,7 @@ namespace FileUpload.Service
         static ICacheHelper _cacheHelper = null;
         static IFileDataModel _fileDataModel = null;
         static ILogger _logger = null;
+        static IFileUploadHelper _fileUploadHelper = null;
 
         static void Main(string[] args)
         {
@@ -30,6 +31,8 @@ namespace FileUpload.Service
             builder.RegisterType<RabbitMQHelper>().As<IMessageQueueHelper>();
             builder.RegisterType<FileDataModel>().As<IFileDataModel>();
             builder.RegisterType<Log4NetHelper>().As<ILogger>();
+            builder.RegisterType<AzureBlobStorageHelper>().As<IFileUploadHelper>();
+
 
             var container = builder.Build();
             #endregion
@@ -42,15 +45,15 @@ namespace FileUpload.Service
                 _messageQueueHelper = scope.Resolve<IMessageQueueHelper>();
                 _applicationConfig = scope.Resolve<IApplicationConfig>();
                 _fileDataModel = scope.Resolve<IFileDataModel>();
+                _fileUploadHelper = scope.Resolve<IFileUploadHelper>();
                 #endregion
 
-                var fileProcessor = new FileProcessor(_fileDataModel);
+                var fileProcessor = new FileProcessor(_fileDataModel, _fileUploadHelper, _applicationConfig);
 
                 #region Processors
-                //Start Message Queue Listener
                 Task.Run(() => _messageQueueHelper.ReadMessages<FileMetaData>(_applicationConfig, fileProcessor.FilePushed, _applicationConfig.FileDataCreateQueue));
-                //Start Message Queue Processor
-                Task.Run(() => _messageQueueHelper.ReadMessages<Guid>(_applicationConfig, fileProcessor.FileDelete, _applicationConfig.FileMetaDeleteQueue));
+                Task.Run(() => _messageQueueHelper.ReadMessages<FileMetaData>(_applicationConfig, fileProcessor.FileDelete, _applicationConfig.FileMetaDeleteQueue));
+                Task.Run(() => _messageQueueHelper.ReadMessages<FileMetaData>(_applicationConfig, fileProcessor.FileOpened, _applicationConfig.FileOpenedQueue));
                 #endregion
             }
 

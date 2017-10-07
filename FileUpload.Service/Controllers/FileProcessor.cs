@@ -1,4 +1,5 @@
-﻿using Data.DataModels;
+﻿using Common.Helpers.IHelpers;
+using Data.DataModels;
 using Entities;
 using System;
 using System.Collections.Generic;
@@ -11,21 +12,45 @@ namespace FileUpload.Service.Controllers
     public class FileProcessor
     {
         IFileDataModel _fileDataModel = null;
+        IFileUploadHelper _fileUploadHelper = null;
+        IApplicationConfig _applicationConfig = null;
 
-        public FileProcessor(IFileDataModel fileDataModel)
+        public FileProcessor(IFileDataModel fileDataModel, IFileUploadHelper fileUploadHelper, IApplicationConfig applicationConfig)
         {
             this._fileDataModel = fileDataModel;
+            this._fileUploadHelper = fileUploadHelper;
+            this._applicationConfig = applicationConfig;
         }
 
 
-        public void FilePushed(FileMetaData value)
+        public void FilePushed(FileMetaData file)
         {
-            _fileDataModel.Insert(value);
+            _fileDataModel.Insert(file);
         }
 
-        public void FileDelete(Guid value)
+        public void FileDelete(FileMetaData file)
         {
-            _fileDataModel.Delete(value);
+            var fileDB = _fileDataModel.Get(file.ID);
+            if (fileDB.UserID == file.UserID)
+            {
+                var deltetedFromBlob = _fileUploadHelper.DeleteFile(_applicationConfig, Convert.ToString(file.ID));
+                var fileExists = _fileUploadHelper.Exists(_applicationConfig, Convert.ToString(file.ID));
+
+                if (fileExists == false || deltetedFromBlob)
+                {
+                    _fileDataModel.Delete(file.ID);
+                }
+            }
+        }
+
+        public void FileOpened(FileMetaData file)
+        {
+            var fileDB = _fileDataModel.Get(file.ID);
+            if (fileDB.UserID == file.UserID)
+            {
+                fileDB.ViewCount += 1;
+                _fileDataModel.Update(fileDB);
+            }
         }
     }
 }
