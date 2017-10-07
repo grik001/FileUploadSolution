@@ -4,20 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Common.Helpers.IHelpers;
+using System.Configuration;
 
 namespace Common.Helpers
 {
     public class ApplicationConfig : IApplicationConfig
     {
-        public string FileDataCreateQueue { get => "fileMetaDataQueue"; }
-        public string FileMetaDeleteQueue { get => "fileMetaDeleteQueue"; }
-        public string FileOpenedQueue { get => "FileOpenedQueue"; }
+        public string FileDataCreateQueue { get => ConfigurationManager.AppSettings["FileDataCreateQueue"]; }
+        public string FileMetaDeleteQueue { get => ConfigurationManager.AppSettings["FileMetaDeleteQueue"]; }
+        public string FileOpenedQueue { get => ConfigurationManager.AppSettings["FileOpenedQueue"]; }
 
-        public string RabbitConnection { get => "localhost"; }
-        public string RedisServerName { get => "localhost:6379"; } //192.168.99.100:32770
-        public string WebServerUrl { get => "http://localhost:8090"; }
-        public string BlobConnectionString { get => "DefaultEndpointsProtocol=https;AccountName=fileupload001;AccountKey=XwehxPZtZUQqSftaA7werJlKHeEm+bcbvGAE/k7aYJv3o73DsDYt/V73eNs66hMS5pWyRkDVXQqzFgpdhHTnEg==;EndpointSuffix=core.windows.net"; }
-        public string CsvContainer { get => "csvcontainer"; }
-        
+        public string RabbitConnection { get => ConfigurationManager.AppSettings["RabbitConnection"]; }
+        public string RedisServerName { get => ConfigurationManager.AppSettings["RedisServerName"]; } 
+        public string WebServerUrl { get => ConfigurationManager.AppSettings["WebServerUrl"]; }
+        public string BlobConnectionString { get => ConfigurationManager.AppSettings["BlobConnectionString"]; }
+        public string CsvContainer { get => ConfigurationManager.AppSettings["CsvContainer"]; }
+        public string RedisFileMetaList { get => ConfigurationManager.AppSettings["RedisFileMetaList"]; }
     }
 }

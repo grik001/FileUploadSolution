@@ -18,5 +18,7 @@ namespace Common.Helpers.IHelpers
         string WebServerUrl { get; }
         string BlobConnectionString { get; }
         string CsvContainer { get; }
+
+        string RedisFileMetaList { get; }
     }
 }

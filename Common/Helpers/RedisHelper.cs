@@ -59,7 +59,8 @@ namespace Common.Helpers
             try
             {
                 var database = GetConnection();
-                var result = database.StringSet(key, JsonConvert.SerializeObject(value));
+                var valueToCache = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+                var result = database.StringSet(key, JsonConvert.SerializeObject(valueToCache));
                 return result;
             }
             catch (Exception ex)

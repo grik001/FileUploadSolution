@@ -1,6 +1,7 @@
 ﻿using Common.Helpers.IHelpers;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Shared.Protocol;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +27,19 @@ namespace Common.Helpers
             {
                 CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config.BlobConnectionString);
                 CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+
+                var serviceProperties = blobClient.GetServiceProperties(); 
+                serviceProperties.Cors = new CorsProperties();
+                serviceProperties.Cors.CorsRules.Add(new CorsRule()
+                {
+                    AllowedHeaders = new List<string>() { "*" },
+                    AllowedMethods = CorsHttpMethods.Put | CorsHttpMethods.Get | CorsHttpMethods.Head | CorsHttpMethods.Post,
+                    AllowedOrigins = new List<string>() { "*" },
+                    ExposedHeaders = new List<string>() { "*" },
+                });
+
+                blobClient.SetServiceProperties(serviceProperties);
+
                 CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
                 container.CreateIfNotExists();
 
@@ -46,6 +60,8 @@ namespace Common.Helpers
                 CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                 CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
                 CloudBlockBlob blockBlob = container.GetBlockBlobReference(reference);
+                blockBlob.Properties.ContentType = "text/csv";
+              
                 blockBlob.UploadFromStream(stream);
                 return blockBlob.Uri.AbsoluteUri;
             }
