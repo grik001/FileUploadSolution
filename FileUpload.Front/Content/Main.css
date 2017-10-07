@@ -9,12 +9,17 @@
     padding:10px;
 }
 
-    .fileuploadButtonContainer input {
+    .fileuploadButtonContainer div input {
         margin-right: 10px;
     }
 
 
+.fileuploadFunctionButton {
+    margin-right: 10px;
+}
+
 .fileUploadTempFileContainer {
+    margin-top:10px;
     width: 100%;
     background-color: #ededed;
     max-height:200px;

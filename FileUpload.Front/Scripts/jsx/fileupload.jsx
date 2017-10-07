@@ -1,4 +1,5 @@
 var UploadHub = React.createClass({
+
     getInitialState: function () {
         return { temporaryFiles: [], allFiles: [] };
     },
@@ -10,15 +11,7 @@ var UploadHub = React.createClass({
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (data) {
-
-                var filesList = [];
-
-                for (var i = 0; i < data.length; i++) {
-                    var file = data[i];
-                    filesList.push({ id: file.ID, name: file.Filename, url: file.BlobUrl, viewCount: file.Views, size: file.Size });
-                }
-
-                this.setState({ allFiles: filesList });
+                this.fileuploadUpdateFileList(data);
             }.bind(this)
         });
     },
@@ -38,9 +31,10 @@ var UploadHub = React.createClass({
             contentType: false,
             processData: false,
             data: data,
-            success: function (result) {
-
-            },
+            success: function (data) {
+                this.fileuploadUpdateFileList(data);
+                this.setState({ temporaryFiles: [] });
+            }.bind(this),
             error: function (xhr, status, p3, p4) {
                 var err = "Error " + " " + status + " " + p3 + " " + p4;
                 if (xhr.responseText && xhr.responseText[0] == "{")
@@ -49,6 +43,17 @@ var UploadHub = React.createClass({
         });
     },
 
+    fileuploadUpdateFileList: function (filesList) {
+        currentFiles = this.state.allFiles;
+
+        for (var i = 0; i < filesList.length; i++) {
+            var file = filesList[i];
+            currentFiles.push({ id: file.ID, name: file.Filename, url: file.BlobUrl, viewCount: file.Views, size: file.Size });
+        }
+
+        this.setState({ allFiles: currentFiles });
+
+    },
 
     fileuploadUpdateTempList: function () {
         var fileInput = document.getElementById('fileuploadBtnBrowse');
@@ -62,12 +67,13 @@ var UploadHub = React.createClass({
         }
 
         this.setState({ temporaryFiles: filesTemp });
-
         document.getElementById("fileuploadBtnBrowse").value = "";
+        this.fileupoadShowHide();
     },
 
     fileuploadCancelTemp: function () {
         this.setState({ temporaryFiles: [] });
+        this.fileupoadShowHide();
     },
 
 
@@ -81,6 +87,7 @@ var UploadHub = React.createClass({
             }
 
         this.setState({ temporaryFiles: tempFiles });
+        this.fileupoadShowHide();
     },
 
     generateUUID: function generateUUID() {
@@ -93,25 +100,57 @@ var UploadHub = React.createClass({
         return uuid;
     },
 
+    fileupoadShowHide: function () {
+
+        if (this.state.temporaryFiles.length > 0) {
+            $('#fileUploadTempFileContainer').show();
+        }
+        else {
+            $('#fileUploadTempFileContainer').hide();
+        }
+    },
+
     fileuploadViewUploadedFile: function (id) {
-     
+        $.ajax({
+            type: "PUT",
+            url: '/api/File/' + id,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
     fileuploadDeleteUploadedFile: function (id) {
+        $.ajax({
+            type: "DELETE",
+            url: '/api/File/' + id,
+            contentType: false,
+            processData: false,
+            success: function (data) {
 
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
     render: function () {
         return (
             <div className="fileuploadContainer">
                 <div className="row">
-                    <label className="btn btn-primary btn-file">
+                    <label className="btn btn-primary btn-file fileuploadFunctionButton">
                         Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
                     </label>
-                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning" type="button" value="Start Upload" />
-                    <input onClick={this.fileuploadCancelTemp} className="btn btn-danger" type="button" value="Cancel" />
+                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
+                    <input onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
                 </div>
-                <div className="row fileUploadTempFileContainer">
+                <div id='fileUploadTempFileContainer' className="row fileUploadTempFileContainer">
                     <ul>
                         {this.state.temporaryFiles.map(file =>
                             <li className="clearfix" key={file.id}>
@@ -163,8 +202,8 @@ var UploadHub = React.createClass({
                                     <td>{file.size}</td>
                                     <td>{file.viewCount}</td>
                                     <td>
-                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id)} className="btn btn-warning pull-right" type="button" value="View" />
-                                        <input onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)}  className="btn btn-danger pull-right"  type="button" value="Delete" />
+                                        <input onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)} className="btn btn-danger pull-right" type="button" value="Delete" />
+                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id)} className="btn btn-warning pull-right fileuploadFunctionButton" type="button" value="View" />
                                     </td>
 
                                 </tr>

@@ -55,5 +55,41 @@ namespace Common.Helpers
                 return null;
             }
         }
+
+
+        public bool DeleteFile(IApplicationConfig config, string reference)
+        {
+            try
+            {
+                CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config.BlobConnectionString);
+                CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
+                CloudBlockBlob blockBlob = container.GetBlockBlobReference(reference);
+                return blockBlob.DeleteIfExists();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to delete file from Blob", ex);
+                return false;
+            }
+        }
+
+        public bool Exists(IApplicationConfig config, string reference)
+        {
+            try
+            {
+                CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config.BlobConnectionString);
+                CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                CloudBlobContainer container = blobClient.GetContainerReference(config.CsvContainer);
+                CloudBlockBlob blockBlob = container.GetBlockBlobReference(reference);
+                return blockBlob.Exists();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to check if file exists", ex);
+                return false;
+            }
+
+        }
     }
 }
