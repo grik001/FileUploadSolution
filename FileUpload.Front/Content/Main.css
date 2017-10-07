@@ -47,3 +47,7 @@
         .fileUploadFileListcontainer ul li {
             padding: 10px
         }
+
+.csvModalText{
+    word-wrap:break-word;
+}

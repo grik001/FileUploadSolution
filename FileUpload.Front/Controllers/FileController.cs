@@ -99,9 +99,10 @@ namespace FileUpload.Front.Controllers
                             var fileContent = files[file];
                             if (fileContent != null && fileContent.ContentLength > 0)
                             {
+                                var extension = Path.GetExtension(fileContent.FileName);
                                 var stream = fileContent.InputStream;
 
-                                var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString());
+                                var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString()+ extension);
 
                                 FileMetaData fileMeta = new FileMetaData();
                                 fileMeta.UserID = userID;

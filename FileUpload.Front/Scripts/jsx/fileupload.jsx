@@ -1,3 +1,28 @@
+var ViewCsvModal = React.createClass({
+    render: function () {
+        return (
+            <div id="csvModal" className="modal fade" role="dialog">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <button type="button" className="close" data-dismiss="modal">&times;</button>
+                            <h4 id='csvModalHeader' className="modal-title"></h4>
+                        </div>
+                        <div id='csvModalText' className="modal-body csvModalText">
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        );
+    }
+});
+
+
+
 var UploadHub = React.createClass({
 
     getInitialState: function () {
@@ -18,6 +43,11 @@ var UploadHub = React.createClass({
         d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
         var expires = "expires=" + d.toUTCString();
         document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    },
+
+
+    componentDidMount: function () {
+        $('#fileuploadBtnStartUpload').prop("disabled", true);
     },
 
     componentWillMount: function () {
@@ -70,7 +100,6 @@ var UploadHub = React.createClass({
             data: data,
             success: function (data) {
                 this.fileuploadUpdateFileList(data);
-                $(uploadButton).removeAttr("disabled");
             }.bind(this),
             error: function (xhr, status, p3, p4) {
                 var err = "Error " + " " + status + " " + p3 + " " + p4;
@@ -136,30 +165,41 @@ var UploadHub = React.createClass({
 
         if (this.state.temporaryFiles.length > 0) {
             $('#fileUploadTempFileContainer').show();
+            $('#fileuploadBtnStartUpload').removeAttr("disabled");
         }
         else {
             $('#fileUploadTempFileContainer').hide();
+            $('#fileuploadBtnStartUpload').prop("disabled", true);
         }
     },
 
-    fileuploadViewUploadedFile: function (id, blobUrl) {
+    fileuploadViewUploadedFile: function (id, blobUrl, fileName) {
         $.ajax({
             type: "PUT",
             url: '/api/File/' + id,
             contentType: false,
             processData: false,
             success: function (data) {
-                
+
             }.bind(this),
             error: function (xhr, status, p3, p4) {
 
             }
         });
-        console.log(blobUrl);
-        window.open(
-            blobUrl,
-            '_blank' // <- This is what makes it open in a new window.
-        );
+
+        $.ajax({
+            type: "GET",
+            url: blobUrl,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                $('#csvModalHeader').text(fileName);
+                $('#csvModalText').text(data);
+            }.bind(this),
+            error: function (xhr, status, p3, p4) {
+
+            }
+        });
     },
 
     fileuploadDeleteUploadedFile: function (id, e) {
@@ -203,15 +243,18 @@ var UploadHub = React.createClass({
         this.setState({ allFiles: allFiles }, this.fileupoadShowHide);
     },
 
+    fileuploadDownloadUploadedFile: function (fileUrl) {
+        window.open(fileUrl);
+    },
 
     render: function () {
         return (
             <div className="fileuploadContainer">
                 <div className="row">
                     <label className="btn btn-primary btn-file fileuploadFunctionButton">
-                        Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' type="file" style={{ display: 'none' }} multiple />
+                        Browse <input onChange={this.fileuploadUpdateTempList} id='fileuploadBtnBrowse' accept=".csv" type="file" style={{ display: 'none' }} multiple />
                     </label>
-                    <input onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
+                    <input id='fileuploadBtnStartUpload' onClick={this.fileuploadUploadImages} className="btn btn-warning fileuploadFunctionButton" type="button" value="Start Upload" />
                     <input onClick={this.fileuploadCancelTemp} className="btn btn-danger fileuploadFunctionButton" type="button" value="Cancel" />
                 </div>
                 <div id='fileUploadTempFileContainer' className="row fileUploadTempFileContainer">
@@ -251,8 +294,7 @@ var UploadHub = React.createClass({
                         <thead>
                             <tr>
                                 <th>File</th>
-                                <th>File Url</th>
-                                <th>Size</th>
+                                <th>Size(bytes)</th>
                                 <th>Views</th>
                                 <th></th>
                             </tr>
@@ -260,14 +302,13 @@ var UploadHub = React.createClass({
                         <tbody>
                             {this.state.allFiles.map(file =>
                                 <tr key={file.id}>
-
                                     <td>{file.name}</td>
-                                    <td>{file.url}</td>
                                     <td>{file.size}</td>
                                     <td>{file.viewCount}</td>
                                     <td>
                                         <input id={'fileuploadBtnDelete_' + file.id} onClick={this.fileuploadDeleteUploadedFile.bind(null, file.id)} className="btn btn-danger pull-right" type="button" value="Delete" />
-                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id, file.url)} className="btn btn-warning pull-right fileuploadFunctionButton" type="button" value="View" />
+                                        <input onClick={this.fileuploadViewUploadedFile.bind(null, file.id, file.url, file.name)} className="btn btn-warning pull-right fileuploadFunctionButton" type="button" value="View" data-toggle="modal" data-target="#csvModal" />
+                                        <input onClick={this.fileuploadDownloadUploadedFile.bind(null, file.url)} className="btn btn-info pull-right fileuploadFunctionButton" type="button" value="Download" />
                                     </td>
 
                                 </tr>
@@ -276,6 +317,8 @@ var UploadHub = React.createClass({
                         </tbody>
                     </table>
                 </div>
+
+                <ViewCsvModal />
             </div>
         );
     }
