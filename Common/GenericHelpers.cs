@@ -20,5 +20,17 @@ namespace Common
 
             return null;
         }
+
+        public static string GetCurrentSocketID()
+        {
+            var connectionID = HttpContext.Current.Request.Cookies["ConnectionID"].Value;
+
+            if (connectionID != null)
+            {
+                return Convert.ToString(connectionID);
+            }
+
+            return null;
+        }
     }
 }

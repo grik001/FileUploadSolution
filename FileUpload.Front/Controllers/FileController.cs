@@ -1,6 +1,7 @@
 ﻿using Common.Helpers.IHelpers;
 using Data.DataModels;
 using Entities;
+using Entities.Models;
 using Entities.ViewModels;
 using Newtonsoft.Json;
 using System;
@@ -109,7 +110,10 @@ namespace FileUpload.Front.Controllers
                                 fileMeta.FileSize = fileContent.ContentLength;
                                 fileMeta.Filename = fileContent.FileName;
 
-                                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileDataCreateQueue);
+                                var socketID = Common.GenericHelpers.GetCurrentSocketID();
+                                QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
+                                queueItem.MappingID = file;
+                                _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileDataCreateQueue);
 
                                 pushedfiles.Add(new FileViewModel(fileMeta.ID, fileMeta.UserID, fileMeta.Filename, fileMeta.FileExtension, fileMeta.BlobUrl, fileMeta.ViewCount, fileMeta.FileSize));
                             }
@@ -138,7 +142,11 @@ namespace FileUpload.Front.Controllers
                 fileMeta.UserID = userID;
                 fileMeta.ID = id;
 
-                _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileOpenedQueue);
+                var socketID = Common.GenericHelpers.GetCurrentSocketID();
+                QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
+
+
+                _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileOpenedQueue);
                 return Ok();
             }
             catch (Exception ex)
@@ -160,7 +168,10 @@ namespace FileUpload.Front.Controllers
                     fileMeta.UserID = userID;
                     fileMeta.ID = id;
 
-                    _messageQueueHelper.PushMessage<FileMetaData>(_applicationConfig, fileMeta, _applicationConfig.FileMetaDeleteQueue);
+                    var socketID = Common.GenericHelpers.GetCurrentSocketID();
+                    QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
+
+                    _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileMetaDeleteQueue);
                 }
 
                 return Ok();

@@ -24,6 +24,7 @@
     background-color: #ededed;
     max-height:200px;
     overflow-y: scroll;
+    display: none;
 }
 
 .fileUploadTempFileContainer ul {
