@@ -9,8 +9,10 @@ namespace Common.Helpers
 {
     public class ApplicationConfig : IApplicationConfig
     {
-        public string FileMetaDataQueue { get => "fileMetaDataQueue"; }
+        public string FileDataCreateQueue { get => "fileMetaDataQueue"; }
         public string FileMetaDeleteQueue { get => "fileMetaDeleteQueue"; }
+        public string FileOpenedQueue { get => "FileOpenedQueue"; }
+
         public string RabbitConnection { get => "localhost"; }
         public string RedisServerName { get => "localhost:6379"; } //192.168.99.100:32770
         public string WebServerUrl { get => "http://localhost:8090"; }

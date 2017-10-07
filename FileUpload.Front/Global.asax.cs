@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Autofac.Integration.Mvc;
 using Autofac.Integration.WebApi;
 using Common.Helpers;
 using Common.Helpers.IHelpers;
@@ -13,6 +14,7 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
+using System.Web.SessionState;
 
 namespace FileUpload.Front
 {
@@ -37,15 +39,21 @@ namespace FileUpload.Front
             var config = GlobalConfiguration.Configuration;
             var builder = new ContainerBuilder();
 
+            builder.RegisterControllers(typeof(MvcApplication).Assembly);
             builder.RegisterApiControllers(Assembly.GetExecutingAssembly());
+
             builder.RegisterType<FileDataModel>().As<IFileDataModel>().SingleInstance();
             builder.RegisterType<RabbitMQHelper>().As<IMessageQueueHelper>().SingleInstance();
             builder.RegisterType<RedisHelper>().As<ICacheHelper>().SingleInstance();
             builder.RegisterType<Log4NetHelper>().As<ILogger>().SingleInstance();
             builder.RegisterType<ApplicationConfig>().As<IApplicationConfig>().SingleInstance();
             builder.RegisterType<AzureBlobStorageHelper>().As<IFileUploadHelper>().SingleInstance();
+            builder.RegisterType<AspNetUserDataModel>().As<IAspNetUserDataModel>().SingleInstance();
+
 
             Container = builder.Build();
+
+            DependencyResolver.SetResolver(new AutofacDependencyResolver(Container));
             config.DependencyResolver = new AutofacWebApiDependencyResolver(Container);
         }
     }
