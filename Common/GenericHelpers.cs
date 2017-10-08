@@ -48,9 +48,9 @@ namespace Common
         {
             if (HttpContext.Current != null)
             {
-                var userID = HttpContext.Current.Request.Cookies["UserID"].Value;
+                var userID = HttpContext.Current.Request.Cookies["UserID"]?.Value;
 
-                if (userID != null)
+                if (!String.IsNullOrWhiteSpace(userID))
                 {
                     return Convert.ToString(userID);
                 }
@@ -63,9 +63,9 @@ namespace Common
         {
             if (HttpContext.Current != null)
             {
-                var connectionID = HttpContext.Current.Request.Cookies["ConnectionID"].Value;
+                var connectionID = HttpContext.Current.Request.Cookies["ConnectionID"]?.Value;
 
-                if (connectionID != null)
+                if (!String.IsNullOrWhiteSpace(connectionID))
                 {
                     return Convert.ToString(connectionID);
                 }
