@@ -20,5 +20,6 @@ namespace Common.Helpers.IHelpers
         string CsvContainer { get; }
 
         string RedisFileMetaList { get; }
+        string AcceptedFiles { get; }
     }
 }

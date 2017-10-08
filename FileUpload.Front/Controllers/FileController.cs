@@ -1,4 +1,5 @@
-﻿using Common.Helpers.IHelpers;
+﻿using Common;
+using Common.Helpers.IHelpers;
 using Data.DataModels;
 using Entities;
 using Entities.Models;
@@ -22,55 +23,41 @@ namespace FileUpload.Front.Controllers
         private ILogger _logger;
         private IApplicationConfig _applicationConfig;
         private IFileUploadHelper _fileUploadHelper;
+        private IGenericHelper _genericHelper;
 
-        public FileController(IFileDataModel fileDataModel, ILogger logger, IMessageQueueHelper messageQueueHelper, IApplicationConfig applicationConfig, IFileUploadHelper fileUploadHelper)
+        public FileController(IFileDataModel fileDataModel, ILogger logger, IMessageQueueHelper messageQueueHelper, IApplicationConfig applicationConfig, IFileUploadHelper fileUploadHelper, IGenericHelper genericHelper)
         {
             this._fileDataModel = fileDataModel;
             this._logger = logger;
             this._messageQueueHelper = messageQueueHelper;
             this._applicationConfig = applicationConfig;
             this._fileUploadHelper = fileUploadHelper;
+            this._genericHelper = genericHelper;
         }
 
         public IHttpActionResult Get()
         {
             try
             {
-                var userID = Common.GenericHelpers.GetUserID();
-                var filesDB = _fileDataModel.Get(userID);
+                var userID = _genericHelper.GetUserID();
 
-                FileViewModel[] result = null;
-
-                if (filesDB != null)
+                if (userID != null)
                 {
-                    result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl, x.ViewCount, x.FileSize)).ToArray();
-                }
+                    var filesDB = _fileDataModel.Get(userID);
 
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("File/Get failed", ex);
-                return InternalServerError();
-            }
-        }
+                    FileViewModel[] result = null;
 
-        public IHttpActionResult Get(Guid id)
-        {
-            try
-            {
-                var userID = Common.GenericHelpers.GetUserID();
-                var fileDB = _fileDataModel.Get(id);
+                    if (filesDB != null)
+                    {
+                        result = filesDB.Select(x => new FileViewModel(x.ID, x.UserID, x.Filename, x.FileExtension, x.BlobUrl, x.ViewCount, x.FileSize)).ToArray();
+                    }
 
-                if (fileDB != null)
-                {
-                    var result = new FileViewModel(fileDB.ID, fileDB.UserID, fileDB.Filename, fileDB.FileExtension, fileDB.BlobUrl, fileDB.ViewCount, fileDB.FileSize);
                     return Ok(result);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"File/Get/id {id.ToString()} failed", ex);
+                _logger.LogError("File/Get failed", ex);
                 return InternalServerError();
             }
 
@@ -83,40 +70,51 @@ namespace FileUpload.Front.Controllers
             try
             {
                 List<FileViewModel> pushedfiles = new List<FileViewModel>();
+                List<FileViewModel> failedfiles = new List<FileViewModel>();
 
-                var userID = Common.GenericHelpers.GetUserID();
+                var userID = _genericHelper.GetUserID();
 
                 if (userID != null)
                 {
-                    var files = HttpContext.Current.Request.Files;
+                    var files = _genericHelper.GetFilesFromHttpMessage();
 
-                    if (files.Count > 0)
+                    if (files != null && files.Count > 0)
                     {
-                        foreach (string file in files)
+                        foreach (var fileContent in files)
                         {
                             var fileID = Guid.NewGuid();
 
-                            var fileContent = files[file];
                             if (fileContent != null && fileContent.ContentLength > 0)
                             {
                                 var extension = Path.GetExtension(fileContent.FileName);
+                                var isFileValid = _genericHelper.IsFileAccepted(_applicationConfig, extension);
+
+                                if (isFileValid == false)
+                                {
+                                    //do logic to report failed uploads //log for info purposes
+                                    continue;
+                                }
+
                                 var stream = fileContent.InputStream;
+                                var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString() + extension);
 
-                                var url = _fileUploadHelper.UploadFile(_applicationConfig, stream, fileID.ToString()+ extension);
+                                if (url != null)
+                                {
+                                    FileMetaData fileMeta = new FileMetaData();
+                                    fileMeta.UserID = userID;
+                                    fileMeta.ID = fileID;
+                                    fileMeta.BlobUrl = url;
+                                    fileMeta.FileSize = fileContent.ContentLength;
+                                    fileMeta.Filename = fileContent.FileName;
 
-                                FileMetaData fileMeta = new FileMetaData();
-                                fileMeta.UserID = userID;
-                                fileMeta.ID = fileID;
-                                fileMeta.BlobUrl = url;
-                                fileMeta.FileSize = fileContent.ContentLength;
-                                fileMeta.Filename = fileContent.FileName;
+                                    var socketID = _genericHelper.GetCurrentSocketID();
 
-                                var socketID = Common.GenericHelpers.GetCurrentSocketID();
-                                QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
-                                queueItem.MappingID = file;
-                                _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileDataCreateQueue);
+                                    QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
+                                    queueItem.MappingID = fileContent.FileKey;
+                                    _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileDataCreateQueue);
 
-                                pushedfiles.Add(new FileViewModel(fileMeta.ID, fileMeta.UserID, fileMeta.Filename, fileMeta.FileExtension, fileMeta.BlobUrl, fileMeta.ViewCount, fileMeta.FileSize));
+                                    pushedfiles.Add(new FileViewModel(fileMeta.ID, fileMeta.UserID, fileMeta.Filename, fileMeta.FileExtension, fileMeta.BlobUrl, fileMeta.ViewCount, fileMeta.FileSize));
+                                }
                             }
                         }
                     }
@@ -137,31 +135,7 @@ namespace FileUpload.Front.Controllers
         {
             try
             {
-                var userID = Common.GenericHelpers.GetUserID();
-
-                FileMetaData fileMeta = new FileMetaData();
-                fileMeta.UserID = userID;
-                fileMeta.ID = id;
-
-                var socketID = Common.GenericHelpers.GetCurrentSocketID();
-                QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
-
-
-                _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileOpenedQueue);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"File/Put/id  id:{id} failed", ex);
-                return InternalServerError();
-            }
-        }
-
-        public IHttpActionResult Delete(Guid id)
-        {
-            try
-            {
-                var userID = Common.GenericHelpers.GetUserID();
+                var userID = _genericHelper.GetUserID();
 
                 if (userID != null)
                 {
@@ -169,19 +143,48 @@ namespace FileUpload.Front.Controllers
                     fileMeta.UserID = userID;
                     fileMeta.ID = id;
 
-                    var socketID = Common.GenericHelpers.GetCurrentSocketID();
+                    var socketID = _genericHelper.GetCurrentSocketID();
+                    QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
+                    _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileOpenedQueue);
+
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"File/Put/id  id:{id} failed", ex);
+                return InternalServerError();
+            }
+
+            return NotFound();
+        }
+
+        public IHttpActionResult Delete(Guid id)
+        {
+            try
+            {
+                var userID = _genericHelper.GetUserID();
+
+                if (userID != null)
+                {
+                    FileMetaData fileMeta = new FileMetaData();
+                    fileMeta.UserID = userID;
+                    fileMeta.ID = id;
+
+                    var socketID = _genericHelper.GetCurrentSocketID();
                     QueueFileMetaDataModel queueItem = new QueueFileMetaDataModel(fileMeta, socketID);
 
                     _messageQueueHelper.PushMessage<QueueFileMetaDataModel>(_applicationConfig, queueItem, _applicationConfig.FileMetaDeleteQueue);
+                    return Ok();
                 }
-
-                return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogError($"File/Delete/id {id.ToString()} failed", ex);
                 return InternalServerError();
             }
+
+            return NotFound();
         }
     }
 }

@@ -79,6 +79,7 @@
     <Compile Include="GenericHelpers.cs" />
     <Compile Include="Helpers\ApplicationConfig.cs" />
     <Compile Include="Helpers\AzureBlobStorageHelper.cs" />
+    <Compile Include="Helpers\HttpFileUploadHelper.cs" />
     <Compile Include="Helpers\IHelpers\IApplicationConfig.cs" />
     <Compile Include="Helpers\IHelpers\ICacheHelper.cs" />
     <Compile Include="Helpers\IHelpers\IFileUploadHelper.cs" />

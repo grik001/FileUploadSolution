@@ -20,5 +20,6 @@ namespace Common.Helpers
         public string BlobConnectionString { get => ConfigurationManager.AppSettings["BlobConnectionString"]; }
         public string CsvContainer { get => ConfigurationManager.AppSettings["CsvContainer"]; }
         public string RedisFileMetaList { get => ConfigurationManager.AppSettings["RedisFileMetaList"]; }
+        public string AcceptedFiles { get => ConfigurationManager.AppSettings["AcceptedFiles"]; }
     }
 }

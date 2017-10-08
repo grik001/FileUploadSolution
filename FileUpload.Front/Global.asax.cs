@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Integration.Mvc;
 using Autofac.Integration.WebApi;
+using Common;
 using Common.Helpers;
 using Common.Helpers.IHelpers;
 using Data.DataModels;
@@ -49,8 +50,8 @@ namespace FileUpload.Front
             builder.RegisterType<ApplicationConfig>().As<IApplicationConfig>().SingleInstance();
             builder.RegisterType<AzureBlobStorageHelper>().As<IFileUploadHelper>().SingleInstance();
             builder.RegisterType<AspNetUserDataModel>().As<IAspNetUserDataModel>().SingleInstance();
-
-
+            builder.RegisterType<GenericHelpers>().As<IGenericHelper>().SingleInstance();
+            
             Container = builder.Build();
 
             DependencyResolver.SetResolver(new AutofacDependencyResolver(Container));
