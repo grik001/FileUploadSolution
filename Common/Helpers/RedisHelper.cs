@@ -24,8 +24,9 @@ namespace Common.Helpers
         public IDatabase GetConnection()
         {
             var serverName = _applicationConfig.RedisServerName;
-            var connection = ConnectionMultiplexer.Connect($"{serverName},allowAdmin=true");
-
+            
+            var connection = ConnectionMultiplexer.Connect(_applicationConfig.RedisConnectionString);
+            
             var server = connection.GetServer(serverName);
             var database = connection.GetDatabase();
 

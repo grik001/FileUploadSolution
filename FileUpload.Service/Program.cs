@@ -27,6 +27,8 @@ namespace FileUpload.Service
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Starting APP");
+
             #region DI Container Builder
             var builder = new ContainerBuilder();
 

@@ -15,7 +15,6 @@ namespace Common.Helpers
 
     public class RabbitMQHelper : IMessageQueueHelper
     {
-
         private ILogger _logger = null;
 
         public RabbitMQHelper(ILogger logger)
@@ -27,7 +26,12 @@ namespace Common.Helpers
         {
             try
             {
-                var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
+                var factory = new ConnectionFactory();
+
+                factory.HostName = config.RabbitConnection;
+                factory.Port = config.RabbitConnectionPort;
+                factory.UserName = config.RabbitConnectionUsername;
+                factory.Password = config.RabbitConnectionPassword;
 
                 using (var connection = factory.CreateConnection())
                 using (var channel = connection.CreateModel())
@@ -52,7 +56,13 @@ namespace Common.Helpers
         {
             try
             {
-                var factory = new ConnectionFactory() { HostName = config.RabbitConnection };
+                var factory = new ConnectionFactory();
+               
+                factory.HostName = config.RabbitConnection;
+                factory.Port = config.RabbitConnectionPort;
+                factory.UserName = config.RabbitConnectionUsername;
+                factory.Password = config.RabbitConnectionPassword;
+
                 using (var connection = factory.CreateConnection())
                 {
                     using (var channel = connection.CreateModel())

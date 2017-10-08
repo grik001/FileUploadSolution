@@ -20,12 +20,19 @@ namespace FileUpload.Service.Controllers
 
         public void StartWebServer()
         {
-            string url = _applicationConfig.WebServerUrl;
-
-            using (WebApp.Start(url))
+            try
             {
-                Console.WriteLine("Server running on {0}", url);
-                Console.ReadLine();
+                string url = _applicationConfig.WebServerUrl;
+
+                using (WebApp.Start(url))
+                {
+                    Console.WriteLine("Server running on {0}", url);
+                    Console.ReadLine();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
     }
