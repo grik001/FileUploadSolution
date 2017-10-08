@@ -21,5 +21,10 @@ namespace Common.Helpers
         public string CsvContainer { get => ConfigurationManager.AppSettings["CsvContainer"]; }
         public string RedisFileMetaList { get => ConfigurationManager.AppSettings["RedisFileMetaList"]; }
         public string AcceptedFiles { get => ConfigurationManager.AppSettings["AcceptedFiles"]; }
+        public string RedisConnectionString { get => ConfigurationManager.AppSettings["RedisConnectionString"]; }
+
+        public int RabbitConnectionPort { get => Convert.ToInt32(ConfigurationManager.AppSettings["RabbitConnectionPort"]); }
+        public string RabbitConnectionUsername { get => ConfigurationManager.AppSettings["RabbitConnectionUsername"]; }
+        public string RabbitConnectionPassword { get => ConfigurationManager.AppSettings["RabbitConnectionPassword"]; }
     }
 }
